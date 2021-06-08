@@ -3,9 +3,6 @@ import wget
 import gzip
 import shutil
 
-DATASET_LOCATION="https://raw.githubusercontent.com/bowenliu16/rl_graph_generation/master/gym-molecule/gym_molecule/dataset"
-DATASET_NAME="zinc_plogp_sorted.csv"
-
 def download_dataset(storage_path, dataset_filename, dataset_url):
     if not os.path.isdir(storage_path):
         os.mkdir(storage_path)

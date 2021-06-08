@@ -11,10 +11,10 @@
             "program": "src/main_embed.py",
             "subProcess": true,
             "args": [
-                "--name", "embed",
+                "--name", "sGAT",
                 "--use_3d",
-                "--data_path", "src/dataset/NSP15_6W01_A_1_F.Orderable_zinc_db_enaHLL.2col.csv",
-                "--artifact_path", "test_run/dgapn",
+                "--data_path", "src/dataset/NSP15_6W01_A_3_H.negonly_unique_30k.csv", // zinc_plogp_sorted.csv
+                "--artifact_path", "test_run/sgat",
                 "--gpu", "0"
             ],
             "console": "integratedTerminal"
