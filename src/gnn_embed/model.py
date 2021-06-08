@@ -36,10 +36,13 @@ class MyGNN(nn.Module):
         y = self.final_layer(x).squeeze()
         return y
 
-    def get_embedding(self, g, g3D=None, aggr=True, detach=True):
+    def get_embedding(self, g, g3D=None, n_layers=None, return_3d=False, aggr=True, detach=True):
         if isinstance(g, list):
             g3D = g[1]
             g = g[0]
+        if n_layers is None:
+            n_layers = self.nb_layers
+        assert n_layers <= self.nb_layers
 
         x = g.x
         edge_index = g.edge_index
@@ -47,28 +50,40 @@ class MyGNN(nn.Module):
         batch = g.batch
         if g3D is None:
             assert self.use_3d is False
-            for i, l in enumerate(self.layers):
-                x, edge_attr = l(x, edge_index, edge_attr)
+            for i in range(n_layers):
+                x, edge_attr = self.layers[i](x, edge_index, edge_attr)
         else:
             geom_index = g3D.edge_index
             geom_attr = g3D.edge_attr
-            for l, l3D in zip(self.layers, self.layers3D):
-                x1, edge_attr = l(x, edge_index, edge_attr)
-                x2 = l3D(x, geom_index, geom_attr)
+            for i in range(n_layers):
+                x1, edge_attr = self.layers[i](x, edge_index, edge_attr)
+                x2 = self.layers3D[i](x, geom_index, geom_attr)
                 x = x1 + x2
 
-        if detach is True:
+        if detach:
             x = x.detach()
-            edge_index = edge_index.detach()
             edge_attr = edge_attr.detach()
-            batch = batch.detach()
 
-        if aggr is True:
+        if aggr:
             return pyg.nn.global_add_pool(x, batch)
         else:
             g.x = x
             g.edge_attr = edge_attr
-            return g
+            if return_3d:
+                g3D.x = x
+                return [g, g3D]
+            else:
+                return g
+
+    def to_device(self, device, n_layers=None):
+        if n_layers is None:
+            n_layers = self.nb_layers
+        assert n_layers <= self.nb_layers
+
+        for i in range(n_layers):
+            self.layers[i].to(device)
+            if self.use_3d:
+                self.layers3D[i].to(device)
 
 
 
@@ -163,7 +178,6 @@ class MyGAT(MessagePassing):
             out = out.view(-1, self.heads * self.out_channels)
             edge_attr = edge_attr.view(-1, self.heads * self.nb_edge_attr)
         else:
-            # TODO (Yulun): Efficiency
             out = out.mean(dim=1)
             edge_attr = edge_attr.mean(dim=1)
 
@@ -337,7 +351,7 @@ class MyHGATConv(MessagePassing):
             out = out.view(-1, self.heads * self.out_channels)
             edge_attr = edge_attr.view(-1, self.heads * self.nb_edge_attr)
         else:
-            out = out.mean(dim=1)  # TODO(Yulun): simply extract one entry of dim 1.
+            out = out.mean(dim=1)  
             edge_attr = edge_attr.mean(dim=1)
 
         out = self.act(out)

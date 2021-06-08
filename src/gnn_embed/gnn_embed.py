@@ -291,9 +291,11 @@ def train(net,
         logging.info("Train MSE: {:3.2f}".format(train_loss))
         logging.info("Valid MSE: {:3.2f}".format(valid_loss))
         writer.add_scalar('lr', current_lr, i)
-        writer.add_scalars('loss',
-                           {'train': train_loss, 'valid': valid_loss},
-                           i)
+        writer.add_scalar('train_loss', train_loss, i)
+        writer.add_scalar('valid_loss', valid_loss, i)
+        #writer.add_scalars('loss',
+        #                   {'train': train_loss, 'valid': valid_loss},
+        #                   i)
         scheduler.step(valid_loss)
 
         if valid_loss < best_loss:
