@@ -2,7 +2,7 @@ import os
 import argparse
 
 from dataset import get_dataset, preprocess
-from sgat import SGAT
+from sgat import train
 
 def read_args():
     parser = argparse.ArgumentParser()
@@ -30,7 +30,7 @@ def main():
 
     scores, smiles = preprocess.main(args.data_path)
 
-    SGAT.main(artifact_path,
+    train.main(artifact_path,
                        scores,
                        smiles,
                        gpu_num=args.gpu,

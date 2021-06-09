@@ -18,7 +18,7 @@ import torch_geometric as pyg
 
 import utils.graph_utils as graph_utils
 import utils.general_utils as general_utils
-from sgat.model import sGAT
+from .sGAT import sGAT, save_sGAT, load_sGAT
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 
@@ -26,19 +26,18 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 #                   MODEL HANDLING                  #
 #####################################################
 def load_current_model(model_path):
-    net = torch.load(os.path.join(model_path, 'current_model.pth'))
+    net = load_sGAT(os.path.join(model_path, 'current_model.pt'))
     return net
 
 def load_best_model(model_path):
-    net = torch.load(os.path.join(model_path, 'best_model.pth'))
-
+    net = load_sGAT(os.path.join(model_path, 'best_model.pt'))
     return net
 
 def save_current_model(net, model_path):
-    torch.save(net, os.path.join(model_path, 'current_model.pth'))
+    save_sGAT(net, os.path.join(model_path, 'current_model.pt'))
 
 def save_best_model(net, model_path):
-    torch.save(net, os.path.join(model_path, 'best_model.pth'))
+    save_sGAT(net, os.path.join(model_path, 'best_model.pt'))
 
 #############################################
 #            Custom Functions               #
@@ -230,8 +229,6 @@ def proc_one_epoch(net,
     t0 = time.time()
     logging.info("  {} batches, {} samples".format(nb_batch, nb_samples))
     for i, (y, G1, G2) in enumerate(loader):
-        if i > 10:
-            break
         t1 = time.time()
         if train:
             optim.zero_grad()
@@ -274,7 +271,7 @@ def train(net,
     best_loss = arg_handler('best_loss')
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optim, 'min', patience=3, verbose=True)
     scheduler.step(best_loss)
-    for i in range(arg_handler('current_epoch'), 2):
+    for i in range(arg_handler('current_epoch'), 1000):
         t0 = time.time()
         logging.info("\n\nEpoch {}".format(i + 1))
         logging.info("Learning rate: {0:.3g}".format(current_lr))
