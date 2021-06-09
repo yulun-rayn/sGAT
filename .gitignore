@@ -1,6 +1,6 @@
 # MY ADDITIONS
-commands
 .vscode
+commands
 module_check.py
 *.png
 *.swp
@@ -15,6 +15,7 @@ test_run*
 log/
 runs/
 saves/
+artifact/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

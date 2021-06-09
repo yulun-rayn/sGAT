@@ -18,6 +18,16 @@ conda activate sgat-env
   \* *make sure to install the right versions for your toolkit*
 
 
+## Run
+Once the environment is set up, the function call to train & evaluate sGAT is:
+
+```bash
+./main.sh
+```
+
+A list of flags may be found in `main.sh` and `src/main.py` for experimentation with different network parameters.
+
+
 ## Extension
 
 Our Reinforcement Learning architecture built upon sGAT can be found [here](https://github.com/njchoma/DGAPN).
