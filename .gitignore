@@ -1,6 +1,6 @@
 # MY ADDITIONS
 commands
-settings.json
+.vscode
 module_check.py
 *.png
 *.swp
