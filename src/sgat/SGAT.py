@@ -18,7 +18,7 @@ import torch_geometric as pyg
 
 import utils.graph_utils as graph_utils
 import utils.general_utils as general_utils
-from gnn_embed.model import MyGNN
+from sgat.model import sGAT
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 
@@ -230,6 +230,8 @@ def proc_one_epoch(net,
     t0 = time.time()
     logging.info("  {} batches, {} samples".format(nb_batch, nb_samples))
     for i, (y, G1, G2) in enumerate(loader):
+        if i > 10:
+            break
         t1 = time.time()
         if train:
             optim.zero_grad()
@@ -272,7 +274,7 @@ def train(net,
     best_loss = arg_handler('best_loss')
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optim, 'min', patience=3, verbose=True)
     scheduler.step(best_loss)
-    for i in range(arg_handler('current_epoch'), 1000):
+    for i in range(arg_handler('current_epoch'), 2):
         t0 = time.time()
         logging.info("\n\nEpoch {}".format(i + 1))
         logging.info("Learning rate: {0:.3g}".format(current_lr))
@@ -448,7 +450,7 @@ def main(artifact_path,
         logging.info("Model restored")
     except Exception as e:
         input_dim, nb_edge_types = train_data.get_graph_spec()
-        net = MyGNN(input_dim=input_dim,
+        net = sGAT(input_dim=input_dim,
                         nb_hidden=nb_hidden,
                         nb_layers=nb_layers,
                         nb_edge_types=nb_edge_types,

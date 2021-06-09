@@ -5,16 +5,16 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "main_embed",
+            "name": "main",
             "type": "python",
             "request": "launch",
-            "program": "src/main_embed.py",
+            "program": "src/main.py",
             "subProcess": true,
             "args": [
                 "--name", "sGAT",
                 "--use_3d",
                 "--data_path", "src/dataset/NSP15_6W01_A_3_H.negonly_unique_30k.csv", // zinc_plogp_sorted.csv
-                "--artifact_path", "test_run/sgat",
+                "--artifact_path", "test_run",
                 "--gpu", "0"
             ],
             "console": "integratedTerminal"

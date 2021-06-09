@@ -2,7 +2,7 @@ import os
 import argparse
 
 from dataset import get_dataset, preprocess
-from gnn_embed import gnn_embed
+from sgat import SGAT
 
 def read_args():
     parser = argparse.ArgumentParser()
@@ -30,7 +30,7 @@ def main():
 
     scores, smiles = preprocess.main(args.data_path)
 
-    gnn_embed.main(artifact_path,
+    SGAT.main(artifact_path,
                        scores,
                        smiles,
                        gpu_num=args.gpu,

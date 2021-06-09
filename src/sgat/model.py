@@ -5,9 +5,9 @@ import torch_geometric as pyg
 from torch_geometric.data import Data, Batch
 
 
-class MyGNN(nn.Module):
+class sGAT(nn.Module):
     def __init__(self, input_dim, nb_hidden, nb_layers, nb_edge_types, use_3d=False, init_method='uniform'):
-        super(MyGNN, self).__init__()
+        super(sGAT, self).__init__()
         self.input_dim = input_dim
         self.nb_hidden = nb_hidden
         self.nb_layers = nb_layers
