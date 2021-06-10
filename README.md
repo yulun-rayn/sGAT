@@ -27,3 +27,10 @@ Once the environment is set up, the function call to train & evaluate sGAT is:
 ```
 
 A list of flags may be found in `main.sh` and `src/main.py` for experimentation with different network parameters. The run log and models (`state_dict`) are saved under `*artifact_path*/*name*/saves`, and the tensorboard log is saved under `*artifact_path*/*name*/runs`.
+
+## Pre-trained Models
+A trained sGAT model on [a sub-dataset of molecules and scores for docking in the catalytic site of NSP15](https://github.com/yulun-rayn/SGAnCP4ADD/tree/main/dataset/NSP15_6W01_A_3_H.negonly_unique_30k.csv) can be found [here](https://github.com/yulun-rayn/SGAnCP4ADD/tree/main/artifact/sgat).
+
+## License
+
+Contributions are welcome! All content here is licensed under the MIT license.
