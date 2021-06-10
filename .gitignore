@@ -3,7 +3,6 @@
 .vscode
 commands
 module_check.py
-*.png
 *.swp
 run*
 test_run*

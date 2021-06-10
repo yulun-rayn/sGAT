@@ -1,4 +1,5 @@
 # Spatial Graph Attention
+![](figure/sGAT.png)
 
 This repository is the official implementation of Spatial Graph Attention Network (sGAT) within the paper [**Spatial Graph Attention and Curiosity-driven Policy for Antiviral Drug Discovery**](https://arxiv.org/abs/2106.02190). The Reinforcement Learning architecture built upon sGAT can be found in the main repository [here](https://github.com/njchoma/DGAPN).
 
