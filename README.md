@@ -12,8 +12,8 @@ conda activate sgat-env
 ```
 
 ### 2. Install learning library
-- Pytorch **1.8**.0 (https://pytorch.org/get-started/locally/)
-- Pytorch Geometric **1.6**.3 (https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html)
+- [Pytorch](https://pytorch.org/) [**1.8**.0](https://pytorch.org/get-started/previous-versions/)
+- [Pytorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/) [**1.7**.0](https://pytorch-geometric.readthedocs.io/en/1.7.0/notes/installation.html)
 
   \* *make sure to install the right versions for your toolkit*
 
@@ -22,7 +22,7 @@ conda activate sgat-env
 Once the environment is set up, the function call to train & evaluate sGAT is:
 
 ```bash
-./main.sh
+./main.sh &
 ```
 
-A list of flags may be found in `main.sh` and `src/main.py` for experimentation with different network parameters.
+A list of flags may be found in `main.sh` and `src/main.py` for experimentation with different network parameters. The run log and models (`state_dict`) are saved under `*artifact_path*/*name*/saves`, and the tensorboard log is saved under `*artifact_path*/*name*/runs`.
