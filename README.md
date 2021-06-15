@@ -1,18 +1,18 @@
 # Spatial Graph Attention
 ![](figure/sGAT.png)
 
-This repository is the official implementation of Spatial Graph Attention Network (sGAT) within the paper [**Spatial Graph Attention and Curiosity-driven Policy for Antiviral Drug Discovery**](https://arxiv.org/abs/2106.02190). The Reinforcement Learning architecture built upon sGAT can be found in the main repository [here](https://github.com/njchoma/DGAPN).
+This repository is the official implementation of Spatial Graph Attention Network (sGAT) within the paper [**Spatial Graph Attention and Curiosity-driven Policy for Antiviral Drug Discovery**](https://arxiv.org/abs/2106.02190). Our policy networks built upon sGAT can be found [here](https://github.com/njchoma/DGAPN).
 
 
 ## Installation
 
-### 1. Create conda environment
+### 1. Create Conda Environment
 ```bash
 conda create -n sgat-env --file requirements.txt
 conda activate sgat-env
 ```
 
-### 2. Install learning library
+### 2. Install Learning Libraries
 - [Pytorch](https://pytorch.org/) [**1.8**.0](https://pytorch.org/get-started/previous-versions/)
 - [Pytorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/) [**1.7**.0](https://pytorch-geometric.readthedocs.io/en/1.7.0/notes/installation.html)
 

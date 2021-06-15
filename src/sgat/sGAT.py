@@ -155,6 +155,7 @@ class MyGAT(MessagePassing):
         self.linN = Parameter(torch.Tensor(in_channels, heads * out_channels))
         self.linE = Parameter(torch.Tensor(nb_edge_attr, heads * nb_edge_attr))
         self.att = Parameter(torch.Tensor(1, heads, 2 * out_channels + nb_edge_attr))
+        self.arr = Parameter(torch.Tensor(1, heads, 2 * out_channels + nb_edge_attr, nb_edge_attr))
 
         if bias:
             self.bias = Parameter(torch.Tensor(heads * out_channels))
@@ -173,6 +174,7 @@ class MyGAT(MessagePassing):
         init_randoms(self.linN, init_method)
         init_randoms(self.linE, init_method)
         init_randoms(self.att, init_method)
+        init_randoms(self.arr, init_method)
         init_zeros(self.bias)
 
     def forward(self, node_attr, edge_index, edge_attr):
@@ -180,6 +182,7 @@ class MyGAT(MessagePassing):
         # edge_index has shape [2, E]
         # edge_attr has shape [E, nb_edge_attr]
         x = node_attr
+        z = edge_attr
 
         if self.batch_norm:
             x = self.norm(x)
@@ -189,33 +192,35 @@ class MyGAT(MessagePassing):
             x += self.bias
         x = x.view(-1, self.heads, self.out_channels)
 
-        edge_attr = edge_attr.view(-1, self.nb_edge_attr)
-        edge_attr = torch.matmul(edge_attr, self.linE)
-        edge_attr = edge_attr.view(-1, self.heads, self.nb_edge_attr)
+        z = z.view(-1, self.nb_edge_attr)
+        z = torch.matmul(z, self.linE)
+        z = z.view(-1, self.heads, self.nb_edge_attr)
 
         x_i, x_j = x[edge_index[0]], x[edge_index[1]]
-        alpha = (torch.cat([x_i, x_j, edge_attr], dim=-1) * self.att).sum(dim=-1)
+        h = torch.cat([x_i, x_j, z], dim=-1)
+        alpha = (h * self.att).sum(dim=-1)
         alpha = F.leaky_relu(alpha, self.negative_slope)
         alpha = softmax(alpha, edge_index[1], num_nodes=x.size(0))
         alpha = F.dropout(alpha, p=self.dropout, training=self.training)
+        z = torch.matmul(h.unsqueeze(2), self.arr).squeeze(2)
 
         out = self.propagate(edge_index, x=x, alpha=alpha)
         out += x
 
         if self.concat is True:
             out = out.view(-1, self.heads * self.out_channels)
-            edge_attr = edge_attr.view(-1, self.heads * self.nb_edge_attr)
+            z = z.view(-1, self.heads * self.nb_edge_attr)
         else:
-            # TODO (Yulun): Efficiency
             out = out.mean(dim=1)
-            edge_attr = edge_attr.mean(dim=1)
+            z = z.mean(dim=1)
 
         out = self.act(out)
-        edge_attr = self.act(edge_attr)
+        z = self.act(z)
 
         if self.res:
             out += node_attr
-        return out, edge_attr
+            z += edge_attr
+        return out, z
 
     def message(self, x_j, alpha):
         return alpha.view(-1, self.heads, 1) * x_j
@@ -301,11 +306,11 @@ class MyGCN(MessagePassing):
                                              self.in_channels, self.out_channels)
 
 
-class MyHGATConv(MessagePassing):
+class MyHGAT(MessagePassing):
     def __init__(self, in_channels, out_channels, nb_edge_attr, batch_norm=False, res=True, norm_mode="symmetric",
                  heads=1, concat=True, negative_slope=0.2, dropout=0, bias=True, init_method='uniform',
                  **kwargs):
-        super(MyHGATConv, self).__init__(aggr='add', node_dim=0, **kwargs)
+        super(MyHGAT, self).__init__(aggr='add', node_dim=0, **kwargs)
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.batch_norm = batch_norm
@@ -320,6 +325,7 @@ class MyHGATConv(MessagePassing):
         self.linN = Parameter(torch.Tensor(in_channels, heads * out_channels))
         self.linE = Parameter(torch.Tensor(nb_edge_attr, heads * nb_edge_attr))
         self.att = Parameter(torch.Tensor(1, heads, 2 * out_channels + nb_edge_attr))
+        self.arr = Parameter(torch.Tensor(1, heads, 2 * out_channels + nb_edge_attr, nb_edge_attr))
 
         if bias:
             self.bias = Parameter(torch.Tensor(heads * out_channels))
@@ -338,10 +344,12 @@ class MyHGATConv(MessagePassing):
         init_randoms(self.linN, init_method)
         init_randoms(self.linE, init_method)
         init_randoms(self.att, init_method)
+        init_randoms(self.arr, init_method)
         init_zeros(self.bias)
 
     def forward(self, node_attr, hyperedge_index, edge_attr):
         x = node_attr
+        z = edge_attr
 
         if self.batch_norm:
             x = self.norm(x)
@@ -351,15 +359,17 @@ class MyHGATConv(MessagePassing):
             x += self.bias
         x = x.view(-1, self.heads, self.out_channels)
 
-        edge_attr = edge_attr.view(-1, self.nb_edge_attr)
-        edge_attr = torch.matmul(edge_attr, self.linE)
-        edge_attr = edge_attr.view(-1, self.heads, self.nb_edge_attr)
+        z = z.view(-1, self.nb_edge_attr)
+        z = torch.matmul(z, self.linE)
+        z = z.view(-1, self.heads, self.nb_edge_attr)
 
         x_i, x_j = x[hyperedge_index[0]], x[hyperedge_index[1]]
-        alpha = (torch.cat([x_i, x_j, edge_attr], dim=-1) * self.att).sum(dim=-1)
+        h = torch.cat([x_i, x_j, z], dim=-1)
+        alpha = (h * self.att).sum(dim=-1)
         alpha = F.leaky_relu(alpha, self.negative_slope)
         alpha = softmax(alpha, hyperedge_index[0], num_nodes=x.size(0))
         alpha = F.dropout(alpha, p=self.dropout, training=self.training)
+        z = torch.matmul(h.unsqueeze(2), self.arr).squeeze(2)
 
         if hyperedge_index.numel() == 0:
             num_edges = 0
@@ -378,17 +388,18 @@ class MyHGATConv(MessagePassing):
 
         if self.concat is True:
             out = out.view(-1, self.heads * self.out_channels)
-            edge_attr = edge_attr.view(-1, self.heads * self.nb_edge_attr)
+            z = z.view(-1, self.heads * self.nb_edge_attr)
         else:
-            out = out.mean(dim=1)  # TODO(Yulun): simply extract one entry of dim 1.
-            edge_attr = edge_attr.mean(dim=1)
+            out = out.mean(dim=1)
+            z = z.mean(dim=1)
 
         out = self.act(out)
-        edge_attr = self.act(edge_attr)
+        z = self.act(z)
 
         if self.res:
             out += node_attr
-        return out, edge_attr
+            z += edge_attr
+        return out, z
 
     def message(self, x_j, edge_index_i, alpha, norm=None):
         out = x_j
