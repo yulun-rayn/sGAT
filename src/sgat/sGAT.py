@@ -7,8 +7,8 @@ from torch_geometric.data import Data, Batch
 #####################################################
 #                    MODEL SAVING                   #
 #####################################################
-def load_sGAT(state_path):
-    state = torch.load(state_path)
+
+def init_sGAT(state):
     net = sGAT(state['input_dim'],
                 state['nb_hidden'],
                 state['nb_layers'],
@@ -17,7 +17,11 @@ def load_sGAT(state_path):
     net.load_state_dict(state['state_dict'])
     return net
 
-def save_sGAT(net, state_path):
+def load_sGAT(state_path):
+    state = torch.load(state_path)
+    return init_sGAT(state)
+
+def save_sGAT(net, state_path=None):
     torch.save(net.get_dict(), state_path)
 
 #####################################################
