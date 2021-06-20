@@ -10,9 +10,10 @@ from torch_geometric.data import Data, Batch
 
 def init_sGAT(state):
     net = sGAT(state['input_dim'],
+                state['nb_edge_types'],
                 state['nb_hidden'],
                 state['nb_layers'],
-                state['nb_edge_types'],
+                state['output_dim'],
                 state['use_3d'])
     net.load_state_dict(state['state_dict'])
     return net
@@ -29,30 +30,36 @@ def save_sGAT(net, state_path=None):
 #####################################################
 
 class sGAT(nn.Module):
-    def __init__(self, input_dim, nb_hidden, nb_layers, nb_edge_types, use_3d=False, init_method='uniform'):
+    def __init__(self, input_dim, nb_edge_types, nb_hidden, nb_layers, output_dim=1, use_3d=False, init_method='uniform'):
         super(sGAT, self).__init__()
         self.input_dim = input_dim
+        self.nb_edge_types = nb_edge_types
         self.nb_hidden = nb_hidden
         self.nb_layers = nb_layers
-        self.nb_edge_types = nb_edge_types
+        self.output_dim = output_dim
         self.use_3d = use_3d
+
+        if not isinstance(nb_hidden, list):
+            nb_hidden = [nb_hidden] * nb_layers
+        else:
+            assert len(nb_hidden) == nb_layers
 
         layers = []
         in_dim = input_dim
-        for _ in range(nb_layers):
-            layers.append(MyGAT(in_dim, nb_hidden, nb_edge_types, init_method=init_method))
-            in_dim = nb_hidden
+        for i in range(nb_layers):
+            layers.append(sGAT_Att(in_dim, nb_hidden[i], nb_edge_types, init_method=init_method))
+            in_dim = nb_hidden[i]
         self.layers = nn.ModuleList(layers)
 
         if use_3d:
             layers3D = []
             in_dim = input_dim
-            for _ in range(nb_layers):
-                layers3D.append(MyGCN(in_dim, nb_hidden, init_method=init_method))
-                in_dim = nb_hidden
+            for i in range(nb_layers):
+                layers3D.append(sGAT_Geo(in_dim, nb_hidden[i], init_method=init_method))
+                in_dim = nb_hidden[i]
             self.layers3D = nn.ModuleList(layers3D)
 
-        self.final_layer = nn.Linear(in_dim, 1)
+        self.final_layer = nn.Linear(in_dim, output_dim)
 
     def forward(self, g, g3D=None):
         x = self.get_embedding(g, g3D, detach=False)
@@ -141,11 +148,11 @@ def init_zeros(tensor):
         tensor.data.fill_(0)
 
 
-class MyGAT(MessagePassing):
+class sGAT_Att(MessagePassing):
     def __init__(self, in_channels, out_channels, nb_edge_attr, batch_norm=False, res=False,
                  heads=2, concat=False, negative_slope=0.2, dropout=0, bias=True, init_method='uniform',
                  **kwargs):
-        super(MyGAT, self).__init__(aggr='add', node_dim=0, **kwargs)  # "Add" aggregation.
+        super(sGAT_Att, self).__init__(aggr='add', node_dim=0, **kwargs)  # "Add" aggregation.
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.batch_norm = batch_norm
@@ -237,10 +244,10 @@ class MyGAT(MessagePassing):
                                              self.in_channels, self.out_channels, self.heads)
 
 
-class MyGCN(MessagePassing):
+class sGAT_Geo(MessagePassing):
     def __init__(self, in_channels, out_channels, batch_norm=False, res=False, 
                  dropout=0, bias=True, init_method='uniform', **kwargs):
-        super(MyGCN, self).__init__(aggr='add', node_dim=0, **kwargs)  # "Add" aggregation.
+        super(sGAT_Geo, self).__init__(aggr='add', node_dim=0, **kwargs)  # "Add" aggregation.
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.batch_norm = batch_norm
@@ -310,11 +317,11 @@ class MyGCN(MessagePassing):
                                              self.in_channels, self.out_channels)
 
 
-class MyHGAT(MessagePassing):
+class sHGAT_Att(MessagePassing):
     def __init__(self, in_channels, out_channels, nb_edge_attr, batch_norm=False, res=True, norm_mode="symmetric",
                  heads=1, concat=True, negative_slope=0.2, dropout=0, bias=True, init_method='uniform',
                  **kwargs):
-        super(MyHGAT, self).__init__(aggr='add', node_dim=0, **kwargs)
+        super(sHGAT_Att, self).__init__(aggr='add', node_dim=0, **kwargs)
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.batch_norm = batch_norm
