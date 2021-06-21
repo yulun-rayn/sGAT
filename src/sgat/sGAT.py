@@ -131,6 +131,7 @@ from torch.nn import Parameter, BatchNorm1d
 import torch.nn.functional as F
 from torch_geometric.nn.conv import MessagePassing
 from torch_geometric.utils import remove_self_loops, add_self_loops, softmax, degree
+from torch_geometric.utils.num_nodes import maybe_num_nodes
 from torch_scatter import scatter_add
 
 def init_randoms(tensor, method='uniform'):
@@ -246,12 +247,13 @@ class sGAT_Att(MessagePassing):
 
 class sGAT_Geo(MessagePassing):
     def __init__(self, in_channels, out_channels, batch_norm=False, res=False, 
-                 dropout=0, bias=True, init_method='uniform', **kwargs):
+                 normalize=True, dropout=0, bias=True, init_method='uniform', **kwargs):
         super(sGAT_Geo, self).__init__(aggr='add', node_dim=0, **kwargs)  # "Add" aggregation.
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.batch_norm = batch_norm
         self.res = res
+        self.normalize = normalize
 
         self.dropout = dropout
         self.weight = Parameter(torch.Tensor(in_channels, out_channels))
@@ -277,8 +279,22 @@ class sGAT_Geo(MessagePassing):
         # node_attr has shape [N, in_channels]
         # edge_index has shape [2, E]
         # edge_weight has shape [E]
-        if edge_weight is None:
-            edge_weight = node_attr.new_ones(edge_index.size(1))
+
+        if self.normalize:
+            num_nodes = maybe_num_nodes(edge_index, node_attr.size(self.node_dim))
+
+            if edge_weight is None:
+                edge_weight = torch.ones((edge_index.size(1), ), 
+                    device=edge_index.device)
+
+            row, col = edge_index[0], edge_index[1]
+            deg = scatter_add(edge_weight, col, dim=0, dim_size=num_nodes)
+            deg_inv_sqrt = deg.pow_(-0.5)
+            deg_inv_sqrt.masked_fill_(deg_inv_sqrt == float('inf'), 0)
+
+            edge_weight = deg_inv_sqrt[row] * edge_weight * deg_inv_sqrt[col]
+            edge_weight = F.dropout(edge_weight, p=self.dropout, training=self.training)
+
         x = node_attr
 
         if self.batch_norm:
@@ -288,12 +304,7 @@ class sGAT_Geo(MessagePassing):
         if self.bias is not None:
             x += self.bias
 
-        D = scatter_add(edge_weight[edge_index[1]],
-                    edge_index[0], dim=0, dim_size=x.size(0))
-        D = D.pow(-0.5)
-        D[D == float("inf")] = 0
-
-        out = self.propagate(edge_index, x=D.view(-1,1)*x, norm=D)
+        out = self.propagate(edge_index, x=x, norm=edge_weight)
         out += x
 
         out = self.act(out)
@@ -302,11 +313,10 @@ class sGAT_Geo(MessagePassing):
             out += node_attr
         return out
 
-    def message(self, x_j, edge_index_i, norm=None):
+    def message(self, x_j, norm=None):
         out = x_j
         if norm is not None:
-            norm_i = F.dropout(norm[edge_index_i], p=self.dropout, training=self.training)
-            out = norm_i.view(-1, 1) * out
+            out = norm.view(-1, 1) * out
         return out
 
     def update(self, aggr_out):
