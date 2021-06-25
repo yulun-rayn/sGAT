@@ -121,6 +121,7 @@ class sGAT(nn.Module):
                     'nb_hidden': self.nb_hidden,
                     'nb_layers': self.nb_layers,
                     'nb_edge_types': self.nb_edge_types,
+                    'output_dim': self.output_dim,
                     'use_3d': self.use_3d}
         return state
 
