@@ -66,7 +66,7 @@ class sGAT(nn.Module):
         y = self.final_layer(x).squeeze()
         return y
 
-    def get_embedding(self, g, g3D=None, n_layers=None, return_3d=False, aggr=True, detach=True):
+    def get_embedding(self, g, g3D=None, n_layers=None, return_3d=None, aggr=True, detach=True):
         if isinstance(g, list):
             g3D = g[1]
             g = g[0]
@@ -99,6 +99,8 @@ class sGAT(nn.Module):
         else:
             g.x = x
             g.edge_attr = edge_attr
+            if return_3d is None:
+                return_3d = self.use_3d
             if return_3d:
                 g3D.x = x
                 return [g, g3D]
