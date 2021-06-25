@@ -68,7 +68,8 @@ class sGAT(nn.Module):
 
     def get_embedding(self, g, g3D=None, n_layers=None, return_3d=None, aggr=True, detach=True):
         if isinstance(g, list):
-            g3D = g[1]
+            if len(g) > 1:
+                g3D = g[1]
             g = g[0]
         if n_layers is None:
             n_layers = self.nb_layers
