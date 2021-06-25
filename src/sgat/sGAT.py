@@ -97,15 +97,17 @@ class sGAT(nn.Module):
         if aggr:
             return pyg.nn.global_add_pool(x, batch)
         else:
-            g.x = x
-            g.edge_attr = edge_attr
+            g_out = g.clone()
+            g_out.x = x
+            g_out.edge_attr = edge_attr
             if return_3d is None:
                 return_3d = self.use_3d
             if return_3d:
-                g3D.x = x
-                return [g, g3D]
+                g3D_out = g3D.clone()
+                g3D_out.x = x
+                return [g_out, g3D_out]
             else:
-                return g
+                return g_out
 
     def to_device(self, device, n_layers=None):
         if n_layers is None:
