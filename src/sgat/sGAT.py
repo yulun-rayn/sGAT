@@ -63,7 +63,7 @@ class sGAT(nn.Module):
 
     def forward(self, g, g3D=None):
         x = self.get_embedding(g, g3D, detach=False)
-        y = self.final_layer(x).squeeze()
+        y = self.final_layer(x).squeeze(1)
         return y
 
     def get_embedding(self, g, g3D=None, n_layers=None, return_3d=None, aggr=True, detach=True):

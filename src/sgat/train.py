@@ -236,7 +236,7 @@ def proc_one_epoch(net,
         G1 = G1.to(DEVICE)
         G2 = G2.to(DEVICE) if G2 is not None else None
 
-        y_pred = net(G1, G2)
+        y_pred = net(G1, G2).squeeze()
 
         loss = criterion(y_pred, y)
         with torch.autograd.set_detect_anomaly(True):
