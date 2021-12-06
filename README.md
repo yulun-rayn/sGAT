@@ -8,6 +8,7 @@ This repository is the official implementation of Spatial Graph Attention Networ
 
 ### 1. Create Conda Environment
 ```bash
+conda config --append channels conda-forge
 conda create -n sgat-env --file requirements.txt
 conda activate sgat-env
 ```
