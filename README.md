@@ -1,7 +1,7 @@
 # Spatial Graph Attention
 ![](figure/sGAT.png)
 
-This repository is the official implementation of Spatial Graph Attention Network (sGAT) within the paper [**Spatial Graph Attention and Curiosity-driven Policy for Antiviral Drug Discovery**](https://arxiv.org/abs/2106.02190). Our policy networks built upon sGAT can be found [here](https://github.com/njchoma/DGAPN).
+This repository is the official implementation of Spatial Graph Attention Network (sGAT) within the paper [**Spatial Graph Attention and Curiosity-driven Policy for Antiviral Drug Discovery**](https://arxiv.org/abs/2106.02190). Our policy networks built upon sGAT can be found [here](https://github.com/yulun-rayn/DGAPN).
 
 
 ## Installation
@@ -30,7 +30,7 @@ Once the environment is set up, the function call to train & evaluate sGAT is:
 A list of flags may be found in `main.sh` and `src/main.py` for experimentation with different network parameters. The run log and models are saved under `*artifact_path*/saves`, and the tensorboard log is saved under `*artifact_path*/runs`.
 
 ## Pre-trained Models
-A trained sGAT model on [a sub-dataset of molecules and scores for docking in the catalytic site of NSP15](https://github.com/yulun-rayn/SGAnCP4ADD/tree/main/dataset/NSP15_6W01_A_3_H.negonly_unique_30k.csv) can be found [here](https://github.com/yulun-rayn/SGAnCP4ADD/tree/master/artifact/sgat).
+A trained sGAT model on [a sub-dataset of molecules and scores for docking in the catalytic site of NSP15](src/dataset/NSP15_6W01_A_3_H.negonly_unique_300k.csv) can be found [here](https://github.com/yulun-rayn/SGAnCP4ADD).
 
 ## License
 
