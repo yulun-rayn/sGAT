@@ -15,6 +15,7 @@ from torch.utils.data import Dataset, DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 import torch_geometric as pyg
+from torch_geometric.data import Data, Batch
 
 import utils.graph_utils as graph_utils
 import utils.general_utils as general_utils
@@ -142,11 +143,11 @@ def my_collate(samples):
     g2 = [s[2] for s in samples]
 
     y = torch.cat(y, dim=0)
-    G1 = pyg.data.Batch().from_data_list(g1)
+    G1 = Batch.from_data_list(g1)
     if None in g2:
         return y, G1, None
     else:
-        G2 = pyg.data.Batch().from_data_list(g2)
+        G2 = Batch.from_data_list(g2)
         return y, G1, G2
 
 

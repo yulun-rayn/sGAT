@@ -127,12 +127,12 @@ def mols_to_pyg_batch(mols, idm=False, ratio=2., device=None):
         mols = [mols]
     graphs = [mol_to_pyg_graph(mol, idm, ratio) for mol in mols]
 
-    g1 = Batch().from_data_list([graph[0] for graph in graphs])
+    g1 = Batch.from_data_list([graph[0] for graph in graphs])
     if device is not None:
         g1 = g1.to(device)
 
     if idm:
-        g2 = Batch().from_data_list([graph[1] for graph in graphs]).to(device)
+        g2 = Batch.from_data_list([graph[1] for graph in graphs]).to(device)
         if device is not None:
             g2 = g2.to(device)
     else:
