@@ -74,29 +74,29 @@ def get_dense_edges(n):
 
 
 class MolData(Dataset):
-    def __init__(self, logp, smiles, use_3d):
+    def __init__(self, score, smiles, use_3d):
         super(MolData, self).__init__()
-        self.logp = logp
+        self.score = score
         self.smiles = smiles
         self.use_3d = use_3d
 
     def __getitem__(self, index):
-        logp = self.logp[index]
+        score = self.score[index]
         smiles = self.smiles[index]
         # Hot fix, get first in list if mol is none...
         mol = Chem.MolFromSmiles(smiles)
 
         if mol is None:
             smiles = self.smiles[0]
-            logp = self.logp[0]
+            score = self.score[0]
             mol = Chem.MolFromSmiles(smiles)
             print("Invalid SMILE encountered. Using first row instead.")
 
         g = graph_utils.mol_to_pyg_graph(mol, self.use_3d)
-        return torch.FloatTensor([logp]), g[0], g[1]
+        return torch.FloatTensor([score]), g[0], g[1]
 
     def __len__(self):
-        return len(self.logp)
+        return len(self.score)
 
     def get_graph_spec(self):
         y, g, _ = self[0]
@@ -108,14 +108,14 @@ class MolData(Dataset):
         return nb_node_feats, nb_edge_feats
 
     def compute_baseline_error(self):
-        logp = np.array(self.logp)
-        mean = logp.mean()
-        sq_sum = np.sum(np.square(logp - mean)) / len(logp)
+        score = np.array(self.score)
+        mean = score.mean()
+        sq_sum = np.sum(np.square(score - mean)) / len(score)
         logging.info("{:5.3f} baseline L2 loss\n".format(sq_sum))
 
 
-def create_datasets(logp, smiles, use_3d, np_seed=0):
-    nb_samples = len(logp)
+def create_datasets(score, smiles, use_3d, np_seed=0):
+    nb_samples = len(score)
     assert nb_samples > 10
 
     nb_train = int(nb_samples * 0.6)
@@ -124,14 +124,14 @@ def create_datasets(logp, smiles, use_3d, np_seed=0):
     np.random.seed(np_seed)
     sample_order = np.random.permutation(nb_samples)
 
-    logp = np.asarray(logp)[sample_order].tolist()
+    score = np.asarray(score)[sample_order].tolist()
     smiles = np.asarray(smiles)[sample_order].tolist()
 
-    train_data = MolData(logp[:nb_train], smiles[:nb_train], use_3d)
-    valid_data = MolData(logp[nb_train:nb_train + nb_valid],
+    train_data = MolData(score[:nb_train], smiles[:nb_train], use_3d)
+    valid_data = MolData(score[nb_train:nb_train + nb_valid],
                          smiles[nb_train:nb_train + nb_valid],
                          use_3d)
-    test_data = MolData(logp[nb_train + nb_valid:],
+    test_data = MolData(score[nb_train + nb_valid:],
                         smiles[nb_train + nb_valid:],
                         use_3d)
     return train_data, valid_data, test_data
@@ -355,7 +355,7 @@ class ArgumentHandler:
 #############################################
 
 def main(artifact_path,
-         logp,
+         score,
          smiles,
          gpu_num=0,
          upsample=False,
@@ -389,7 +389,7 @@ def main(artifact_path,
 
     arg_handler = ArgumentHandler(save_dir, lr)
 
-    train_data, valid_data, test_data = create_datasets(logp, smiles, use_3d)
+    train_data, valid_data, test_data = create_datasets(score, smiles, use_3d)
     valid_data.compute_baseline_error()
     print("Dataset created")
 
@@ -404,18 +404,18 @@ def main(artifact_path,
         # Percentiles used in dock score weights.
         # Reset randomness
         np.random.seed()
-        #train_25 = np.percentile(train_data.logp, 25)
-        #train_75 = np.percentile(train_data.logp, 75)
+        #train_25 = np.percentile(train_data.score, 25)
+        #train_75 = np.percentile(train_data.score, 75)
         upsampled_weight = np.random.uniform(0.5, 1, 1)[0]
         #split = np.random.uniform(train_25, train_75, 1)[0]
-        split = np.percentile(train_data.logp, 1)
+        split = np.percentile(train_data.score, 1)
         logging.info("Upsampling weights: {:3.2f}".format(upsampled_weight))
         logging.info("Upsampling split: {:3.2f}".format(split))
 
         # Initialize weighted sampler
-        train_weights = torch.DoubleTensor(dock_score_weights(train_data.logp))
-        valid_weights = torch.DoubleTensor(dock_score_weights(valid_data.logp))
-        # test_weights = torch.DoubleTensor(dock_score_weights(test_data.logp))
+        train_weights = torch.DoubleTensor(dock_score_weights(train_data.score))
+        valid_weights = torch.DoubleTensor(dock_score_weights(valid_data.score))
+        # test_weights = torch.DoubleTensor(dock_score_weights(test_data.score))
 
         train_sampler = torch.utils.data.sampler.WeightedRandomSampler(train_weights, len(train_weights))
         valid_sampler = torch.utils.data.sampler.WeightedRandomSampler(valid_weights, len(valid_weights))
@@ -461,7 +461,7 @@ def main(artifact_path,
 
     if exp_loss:
         np.random.seed()
-        exp_loc = min(train_data.logp)
+        exp_loc = min(train_data.score)
         exp_scale = np.random.uniform(1, 4, 1)[0]
         logging.info("Exponential loc: {:3.2f}".format(exp_loc))
         logging.info("Exponential scale: {:3.2f}".format(exp_scale))
