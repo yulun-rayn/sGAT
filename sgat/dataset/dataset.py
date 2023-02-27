@@ -82,12 +82,6 @@ def parse_data_path(data_path, use_3d):
 #                   DATA                    #
 #############################################
 
-def get_dense_edges(n):
-    x = np.arange(n)
-    src, dst = [np.tile(x, len(x)), np.repeat(x, len(x))]
-    return torch.tensor([src, dst], dtype=torch.long)
-
-
 class MolData(Dataset):
     def __init__(self, score, smiles, use_3d):
         super(MolData, self).__init__()

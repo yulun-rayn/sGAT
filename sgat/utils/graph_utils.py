@@ -12,6 +12,8 @@ import torch_geometric as pyg
 from torch_geometric.data import Data, Batch
 from torch_geometric.utils import dense_to_sparse
 
+from .general_utils import is_sorted
+
 HIGHEST_ATOMIC_NUMBER=118
 
 def mol_to_nx(mol):
@@ -55,8 +57,10 @@ def bond_to_edge(bond):
     return edge
 
 
-def is_sorted(l):
-    return all(l[i] <= l[i+1] for i in range(len(l)-1))
+def get_dense_edges(n):
+    x = np.arange(n)
+    src, dst = [np.tile(x, len(x)), np.repeat(x, len(x))]
+    return torch.tensor([src, dst], dtype=torch.long)
 
 def construct_graph(nodes, edges):
     # NODES
