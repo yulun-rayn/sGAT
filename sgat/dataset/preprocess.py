@@ -1,6 +1,6 @@
 import csv
 
-def main(dataset_path):
+def read_data(dataset_path):
     with open(dataset_path, newline='') as csvfile:
         reader = csv.reader(csvfile)
         nb_col = len(next(reader))

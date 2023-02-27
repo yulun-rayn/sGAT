@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 
 import torch_geometric as pyg
-from torch_geometric.data import Data, Batch
 
 #####################################################
 #                    MODEL SAVING                   #
@@ -61,6 +60,17 @@ class sGAT(nn.Module):
 
         self.final_layer = nn.Linear(in_dim, output_dim)
 
+        self.device = torch.device("cpu")
+
+    def to_device(self, device):
+        for i in range(self.nb_layers):
+            self.layers[i].to(device)
+            if self.use_3d:
+                self.layers3D[i].to(device)
+        self.final_layer.to(device)
+
+        self.device = device
+
     def forward(self, g, g3D=None):
         x = self.get_embedding(g, g3D, detach=False)
         y = self.final_layer(x).squeeze(1)
@@ -109,16 +119,6 @@ class sGAT(nn.Module):
                 return [g_out, g3D_out]
             else:
                 return g_out
-
-    def to_device(self, device, n_layers=None):
-        if n_layers is None:
-            n_layers = self.nb_layers
-        assert n_layers <= self.nb_layers
-
-        for i in range(n_layers):
-            self.layers[i].to(device)
-            if self.use_3d:
-                self.layers3D[i].to(device)
 
     def get_dict(self):
         state = {'state_dict': self.state_dict(),
